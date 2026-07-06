@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold">🗂️ Modul 4: Penyederhanaan & Konversi CNF</h2>
+    <p class="text-muted">Masukkan aturan produksi Context-Free Grammar (CFG) untuk diproses penyederhanaannya, ditransformasikan otomatis ke bentuk normal Chomsky, dan melihat visualisasi kelas bahasanya.</p>
+</div>
+
+<div class="row g-4">
+    <!-- BAGIAN INPUT & VISUALISASI HIERARKI CHOMSKY -->
+    <div class="col-md-5">
+        <!-- Input Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">Input Aturan Produksi CFG</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Aturan Produksi (Gunakan format <code>-&gt;</code> dan <code>|</code>)</label>
+                    <textarea id="productions" class="form-control font-monospace" rows="6">S -> aaB
+A -> bA | e
+B -> aA | b</textarea>
+                </div>
+                <button class="btn btn-success w-100" type="button" onclick="prosesCNF()">Proses & Sederhanakan ke CNF</button>
+            </div>
+        </div>
+
+        <!-- VISUALISASI HIERARKI CHOMSKY (STRUKTUR BOX BERTINGKAT) -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">🗺️ Peta Hierarki Chomsky (Kelas Tata Bahasa)</div>
+            <div class="card-body bg-light text-center">
+                <p class="small text-muted mb-3 text-start">Posisi aturan produksi CFG dan bentuk CNF yang kamu masukkan berada pada tingkat **Tipe 2 (Bebas Konteks)**:</p>
+                
+                <div class="p-3 bg-white border rounded">
+                    <!-- Tipe 0 -->
+                    <div class="p-2 mb-2 bg-danger bg-opacity-10 border border-danger rounded">
+                        <small class="fw-bold text-danger d-block">Tipe 0: Unrestricted Grammar</small>
+                        
+                        <!-- Tipe 1 -->
+                        <div class="p-2 my-2 bg-warning bg-opacity-10 border border-warning rounded">
+                            <small class="fw-bold text-warning d-block">Tipe 1: Context-Sensitive Grammar</small>
+                            
+                            <!-- Tipe 2 (Highlight Fokus Utama Modul Ini) -->
+                            <div class="p-2 my-2 bg-primary bg-opacity-25 border border-primary border-2 rounded shadow-sm">
+                                <span class="badge bg-primary mb-1">POSISI MODUL INI</span>
+                                <small class="fw-bold text-primary d-block fs-6">Tipe 2: Context-Free Grammar (CFG)</small>
+                                <span class="d-block text-dark small font-monospace my-1">Format CNF: A -> BC atau A -> a</span>
+                                
+                                <!-- Tipe 3 -->
+                                <div class="p-2 mt-2 bg-success bg-opacity-10 border border-success rounded">
+                                    <small class="fw-bold text-success d-block">Tipe 3: Regular Grammar</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BAGIAN OUTPUT -->
+    <div class="col-md-7">
+        <div id="cnf_result_container" class="d-none">
+            <h5 class="fw-bold mb-3">Tahapan Transformasi Struktur Tata Bahasa:</h5>
+            <div id="cnf_steps_dynamic"></div>
+        </div>
+
+        <div id="cnf_placeholder" class="text-center text-muted py-5 border rounded bg-light h-100 d-flex align-items-center justify-content-center">
+            <p class="mb-0">ℹ️ Jalur konversi tata bahasa masih kosong. Silakan masukkan CFG awal dan klik tombol proses.</p>
+        </div>
+    </div>
+</div>
+
+<!-- JAVASCRIPT FINAL UNTUK MENGUBAH JUDUL SECARA DINAMIS -->
+<script>
+    function prosesCNF() {
+        const dataForm = {
+            productions: document.getElementById('productions').value
+        };
+
+        fetch('/cnf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataForm)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'error') {
+                alert(data.message);
+                return;
+            }
+            document.getElementById('cnf_placeholder').classList.add('d-none');
+            document.getElementById('cnf_result_container').classList.remove('d-none');
+
+            const stepsContainer = document.getElementById('cnf_steps_dynamic');
+            stepsContainer.innerHTML = '';
+
+            if (data.steps) {
+                // Skenario 1: Jika data.steps berupa Array of Objects
+                if (Array.isArray(data.steps)) {
+                    data.steps.forEach((item, index) => {
+                        let stepName = "";
+                        let stepContent = "";
+
+                        // Periksa jika objek memiliki field title & content eksplisit
+                        if (item.title && item.content) {
+                            stepName = item.title;
+                            stepContent = item.content;
+                        } else {
+                            // Ambil key pertama dari objek
+                            const firstKey = Object.keys(item)[0];
+                            if (firstKey === 'content' || firstKey === 'text') {
+                                // Pemetaan judul otomatis yang rapi sesuai urutan indeks pengerjaan CNF
+                                const namaLangkahDefault = [
+                                    "ATURAN PRODUKSI CFG AWAL", 
+                                    "ELIMINASI EPSILON (ε)", 
+                                    "ELIMINASI ATURAN UNIT", 
+                                    "HASIL AKHIR BENTUK NORMAL CHOMSKY (CNF)"
+                                ];
+                                stepName = namaLangkahDefault[index] || `LANGKAH ${index + 1}`;
+                                stepContent = item[firstKey];
+                            } else {
+                                stepName = firstKey;
+                                stepContent = item[firstKey];
+                            }
+                        }
+                        
+                        if (Array.isArray(stepContent)) {
+                            stepContent = stepContent.join('<br>');
+                        }
+                        
+                        stepsContainer.innerHTML += `
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-dark text-white py-2">${index + 1}. ${stepName.toUpperCase()}</div>
+                                <div class="card-body bg-light font-monospace py-2">${stepContent}</div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    // Skenario 2: Jika data.steps berupa Dictionary/Object biasa
+                    Object.keys(data.steps).forEach((key, index) => {
+                        let stepContent = data.steps[key];
+                        if (Array.isArray(stepContent)) stepContent = stepContent.join('<br>');
+                        
+                        stepsContainer.innerHTML += `
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-header bg-dark text-white py-2">${index + 1}. ${key.replace(/_/g, ' ').toUpperCase()}</div>
+                                <div class="card-body bg-light font-monospace py-2">${stepContent}</div>
+                            </div>
+                        `;
+                    });
+                }
+            }
+        })
+        .catch(err => alert("Gagal memproses konversi CNF."));
+    }
+</script>
+{% endblock %}

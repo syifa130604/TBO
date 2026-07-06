@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold">📝 Modul 2: Evaluator Regular Expression (RE)</h2>
+    <p class="text-muted">Masukkan pola ekspresi reguler, uji string kecocokan pola, dan lihat aturan produksi grammar reguler yang setara.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">Komponen Regular Expression</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Pola Regular Expression (RE)</label>
+                    <input type="text" id="pattern" class="form-control font-monospace" value="a*b">
+                    <div class="form-text text-muted small">Tip contoh cepat: <code class="text-primary">a*b</code> | <code class="text-primary">ab</code></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">String Input Uji</label>
+                    <input type="text" id="regex_input_string" class="form-control" value="aaab">
+                </div>
+                <button class="btn btn-success w-100" type="button" onclick="evaluasiRegex()">Evaluasi Pola & String</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div id="regex_result_container" class="d-none">
+            <div id="regex_match_alert" class="alert alert-success d-flex align-items-center mb-4" role="alert">
+                <div id="regex_status_text"></div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">📜 Aturan Produksi Regular Grammar Setara</div>
+                <div class="card-body">
+                    <p class="text-muted small">Representasi tata bahasa formal (Grammar) yang ekuivalen dengan pola RE:</p>
+                    <div class="bg-light p-3 rounded font-monospace border">
+                        <h5 class="mb-2 fw-bold text-dark" id="grammar_rules_output"></h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="regex_placeholder" class="text-center text-muted py-5 border rounded bg-light h-100 d-flex align-items-center justify-content-center">
+            <p class="mb-0">ℹ️ Masukkan pola RE dan string uji, lalu klik tombol evaluasi untuk melihat representasi Grammar.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function evaluasiRegex() {
+        const dataForm = {
+            pattern: document.getElementById('pattern').value,
+            input_string: document.getElementById('regex_input_string').value
+        };
+
+        fetch('/regex', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataForm)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'error') {
+                alert(data.message);
+                return;
+            }
+            document.getElementById('regex_placeholder').classList.add('d-none');
+            document.getElementById('regex_result_container').classList.remove('d-none');
+
+            const alertDiv = document.getElementById('regex_match_alert');
+            const statusText = document.getElementById('regex_status_text');
+            
+            if (data.is_matched) {
+                alertDiv.className = "alert alert-success d-flex align-items-center mb-4";
+                statusText.innerHTML = `🧩 <strong>Match Sukses!</strong> - ${data.message}`;
+            } else {
+                alertDiv.className = "alert alert-danger d-flex align-items-center mb-4";
+                statusText.innerHTML = `❌ <strong>Match Gagal!</strong> - ${data.message}`;
+            }
+
+            // Gabungkan rules grammar jika berbentuk array
+            let rulesText = Array.isArray(data.grammar_rules) ? data.grammar_rules.join('<br>') : data.grammar_rules;
+            document.getElementById('grammar_rules_output').innerHTML = rulesText;
+        })
+        .catch(err => alert("Gagal mengevaluasi Regex."));
+    }
+</script>
+{% endblock %}

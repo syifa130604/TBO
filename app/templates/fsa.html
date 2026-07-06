@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold">🤖 Modul 1: Simulator FSA (DFA / NFA)</h2>
+    <p class="text-muted">Desain, simulasikan string, dan lakukan konversi mesin NFA ke DFA secara otomatis.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span>Definisi Formal Mesin M</span>
+                <select id="machine_type" class="form-select form-select-sm w-auto" style="background-color: white; color: black;">
+                    <option value="DFA">Deterministic (DFA)</option>
+                    <option value="NFA">Non-Deterministic (NFA)</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Kumpulan State (Q)</label>
+                    <input type="text" id="states" class="form-control" value="q0,q1,q2">
+                    <div class="form-text text-muted small">Pisahkan dengan koma</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Alfabet (Σ)</label>
+                    <input type="text" id="alphabet" class="form-control" value="0,1">
+                    <div class="form-text text-muted small">Gunakan 'e' untuk epsilon pada NFA</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">State Awal (q0)</label>
+                    <input type="text" id="initial_state" class="form-control" value="q0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">State Akhir (F)</label>
+                    <input type="text" id="final_states" class="form-control" value="q2">
+                    <div class="form-text text-muted small">Pisahkan dengan koma jika lebih dari satu</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tabel Transisi (δ) <span class="badge bg-secondary font-monospace">JSON</span></label>
+                    <textarea id="transition_table" class="form-control font-monospace" rows="5">{
+  "q0": {"0": "q0", "1": "q1"},
+  "q1": {"0": "q2", "1": "q1"},
+  "q2": {"0": "q2", "1": "q2"}
+}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">Simulasi & Hasil Pengujian</div>
+            <div class="card-body">
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-secondary text-white">String Input</span>
+                    <input type="text" id="fsa_input_string" class="form-control" value="010">
+                    <button class="btn btn-success" type="button" onclick="jalankanSimulasiFSA()">Jalankan Simulasi</button>
+                </div>
+
+                <div id="fsa_result_container" class="d-none">
+                    <div id="fsa_alert_result" class="alert alert-success d-flex align-items-center" role="alert">
+                        <div id="fsa_status_text"></div>
+                    </div>
+
+                    <h5 class="mt-4 fw-bold">Trace Transisi Langkah demi Langkah:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped text-center align-middle mt-2">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Langkah</th>
+                                    <th>State Saat Ini</th>
+                                    <th>Karakter Input</th>
+                                    <th>State Berikutnya</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fsa_trace_table"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="fsa_placeholder" class="text-center text-muted py-5 border rounded bg-light">
+                    <p class="mb-0">ℹ️ Belum ada simulasi yang dijalankan. Masukkan string input dan klik tombol untuk melihat hasil pengujian.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function jalankanSimulasiFSA() {
+        let transisi;
+        try {
+            transisi = JSON.parse(document.getElementById('transition_table').value);
+        } catch(e) {
+            alert("Format Tabel Transisi JSON tidak valid!");
+            return;
+        }
+
+        const dataForm = {
+            machine_type: document.getElementById('machine_type').value,
+            states: document.getElementById('states').value.split(',').map(s => s.trim()),
+            alphabet: document.getElementById('alphabet').value.split(',').map(a => a.trim()),
+            initial_state: document.getElementById('initial_state').value.trim(),
+            final_states: document.getElementById('final_states').value.split(',').map(f => f.trim()),
+            transition_table: transisi,
+            input_string: document.getElementById('fsa_input_string').value
+        };
+
+        fetch('/fsa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataForm)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'error') {
+                alert("Error Validasi Mesin: " + data.message);
+                return;
+            }
+
+            document.getElementById('fsa_placeholder').classList.add('d-none');
+            document.getElementById('fsa_result_container').classList.remove('d-none');
+
+            const alertDiv = document.getElementById('fsa_alert_result');
+            const statusText = document.getElementById('fsa_status_text');
+            
+            if (data.is_accepted) {
+                alertDiv.className = "alert alert-success d-flex align-items-center";
+                statusText.innerHTML = `🎉 <strong>String Diterima!</strong> - ${data.message}`;
+            } else {
+                alertDiv.className = "alert alert-danger d-flex align-items-center";
+                statusText.innerHTML = `❌ <strong>String Ditolak!</strong> - ${data.message}`;
+            }
+
+            const tbody = document.getElementById('fsa_trace_table');
+            tbody.innerHTML = '';
+            
+            if(data.trace && data.trace.length > 0) {
+                data.trace.forEach((langkah, index) => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><span class="badge bg-secondary">${langkah[0] || langkah.current_state}</span></td>
+                            <td class="text-primary fw-bold">${langkah[1] || langkah.input_char}</td>
+                            <td><span class="badge bg-dark">${langkah[2] || langkah.next_state}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+        })
+        .catch(err => alert("Terjadi kesalahan sistem backend."));
+    }
+</script>
+{% endblock %}

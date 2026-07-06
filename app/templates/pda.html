@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold">🥞 Modul 3: Pushdown Automata (PDA) & CFG</h2>
+    <p class="text-muted">Simulasikan pengujian string pada bahasa bebas konteks menggunakan mekanisme Push/Pop memori Stack, serta pelajari aturan CFG-nya.</p>
+</div>
+
+<div class="row g-4">
+    <!-- PARAMETER SPESIFIKASI PDA -->
+    <div class="col-md-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">Spesifikasi Mesin PDA</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Bahasa Target</label>
+                    <input type="text" class="form-control fw-bold" value="L = { a^n b^n | n >= 0 }" disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Masukkan String Uji</strong></label>
+                    <input type="text" id="pda_input_string" class="form-control font-monospace" value="aaabbb">
+                </div>
+                <button class="btn btn-success w-100" type="button" onclick="simulasikanPDA()">Jalankan Stack Simulator</button>
+            </div>
+        </div>
+
+        <!-- VISUALISASI POHON PENURUNAN (PARSE TREE) GRAFIS -->
+        <div id="pda_tree_container" class="card shadow-sm mb-4 d-none">
+            <div class="card-header bg-dark text-white">🌳 Pohon Penurunan (Parse Tree) Grafis</div>
+            <div class="card-body text-center bg-light">
+                <div class="p-3 border rounded bg-white font-monospace text-start" style="overflow-x: auto;">
+                    <div id="parse_tree_graphics" class="text-center text-primary fw-bold" style="white-space: pre; line-height: 1.4;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HASIL STACK TRACE & DERIVASI -->
+    <div class="col-md-7">
+        <div id="pda_result_container" class="d-none">
+            <!-- Box Aturan Produksi & Derivasi -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-info text-white">📄 Aturan CFG & Proses Derivasi</div>
+                <div class="card-body">
+                    <div class="bg-light p-3 rounded font-monospace border mb-3">
+                        <span class="text-muted small d-block">Aturan Produksi CFG Setara:</span>
+                        <strong id="cfg_rule_output" class="fs-5 text-dark">S -> aSb | ε</strong>
+                    </div>
+                    <div class="bg-light p-3 rounded font-monospace border">
+                        <span class="text-muted small d-block fw-bold text-success">Proses Derivasi (Leftmost Derivation):</span>
+                        <div id="pda_derivation_output" class="mt-2 text-dark fw-bold"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mt-4">Pelacakan Memori Tumpukan (Stack Trace):</h5>
+            <div class="table-responsive card shadow-sm mt-2">
+                <table class="table table-bordered table-striped align-middle text-center mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Langkah</th>
+                            <th>State</th>
+                            <th>Karakter Input</th>
+                            <th>Kondisi Isi Stack</th>
+                            <th>Aksi Operasi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pda_trace_body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Placeholder Pesan Awal -->
+        <div id="pda_placeholder" class="text-center text-muted py-5 border rounded bg-light h-100 d-flex align-items-center justify-content-center">
+            <p class="mb-0">ℹ️ Belum ada simulasi Stack PDA yang dijalankan. Klik tombol untuk melihat visualisasi tumpukan memori, derivasi, dan parse tree.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateParseTreeVisual(inputString) {
+        let n = 0;
+        for (let char of inputString) { if (char === 'a') n++; }
+        
+        if (n === 0) {
+            return "  S\n  |\n  ε";
+        }
+
+        let treeStr = "";
+        let indent = "";
+        
+        for(let i = 0; i < n; i++) {
+            treeStr += `${indent}S -> a S b\n`;
+            indent += "    ";
+        }
+        treeStr += `${indent}     |\n${indent}     ε`;
+        return treeStr;
+    }
+
+    // Fungsi pembantu Leftmost Derivation
+    function generateDerivations(inputString) {
+        let n = 0;
+        for (let char of inputString) { if (char === 'a') n++; }
+        
+        let steps = ["S"];
+        let current = "S";
+        
+        for (let i = 0; i < n; i++) {
+            current = current.replace("S", "aSb");
+            steps.push(current);
+        }
+        current = current.replace("S", "ε").replace("ε", "");
+        steps.push(current || "ε");
+        
+        return steps.join("  =>  ");
+    }
+
+    function simulasikanPDA() {
+        const inputStr = document.getElementById('pda_input_string').value.trim();
+        const dataForm = { input_string: inputStr };
+
+        fetch('/pda', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dataForm)
+        })
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('pda_placeholder').classList.add('d-none');
+            document.getElementById('pda_result_container').classList.remove('d-none');
+            document.getElementById('pda_tree_container').classList.remove('d-none');
+
+            if(data.cfg_rules) {
+                document.getElementById('cfg_rule_output').innerText = data.cfg_rules[0];
+            }
+            document.getElementById('pda_derivation_output').innerHTML = generateDerivations(inputStr);
+            document.getElementById('parse_tree_graphics').innerText = generateParseTreeVisual(inputStr);
+
+            const tbody = document.getElementById('pda_trace_body');
+            tbody.innerHTML = '';
+            
+            // LOGIKA FIXED: Mengantisipasi berbagai macam format key dari backend
+            if(data.trace) {
+                data.trace.forEach((trace, index) => {
+                    const stateVal = trace.state || trace.current_state || trace[0] || '-';
+                    const charVal = trace.char || trace.input_char || trace[1] || 'ε';
+                    const stackVal = trace.stack_state || trace.stack || (Array.isArray(trace[2]) ? trace[2].join('') : trace[2]) || '-';
+                    const actionVal = trace.action || trace.info || trace[3] || 'Process';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td><span class="badge bg-dark">${stateVal}</span></td>
+                            <td class="text-primary fw-bold">${charVal}</td>
+                            <td class="font-monospace text-success">${stackVal}</td>
+                            <td><span class="badge bg-primary">${actionVal}</span></td>
+                        </tr>
+                    `;
+                });
+            }
+        })
+        .catch(err => alert("Gagal memproses simulasi PDA."));
+    }
+</script>
+{% endblock %}

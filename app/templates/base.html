@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capstone Project TBO | Enterprise Edition</title>
+    
+    <!-- Google Fonts & Bootstrap 5 -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --sidebar-bg: #1e293b;
+            --sidebar-width: 260px; /* Ukuran lebar fixed sidebar */
+            --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #0369a1 100%);
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; 
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* --- ANIMASI UTAMA --- */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- SIDEBAR FIX DENGAN PIXEL --- */
+        .sidebar { 
+            background: var(--sidebar-bg); 
+            height: 100vh; 
+            color: #f1f5f9;
+            box-shadow: 4px 0 25px rgba(15, 23, 42, 0.15);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width); /* Lebar pasti 260px */
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(56, 189, 248, 0.2);
+        }
+
+        .nav-pills .nav-link {
+            color: #94a3b8;
+            font-weight: 500;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-pills .nav-link:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
+        }
+
+        .nav-pills .nav-link.active {
+            background: var(--accent-gradient) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        /* --- KONTEN UTAMA DIGESER DI LUAR SIDEBAR --- */
+        .main-content {
+            margin-left: var(--sidebar-width); /* Bergeser pas 260px, anti-tumpuk */
+            padding: 2.5rem;
+            width: calc(100% - var(--sidebar-width));
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* --- UI CARD MODERN --- */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+            font-weight: 600;
+        }
+
+        /* Tombol Premium */
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .form-control:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+        }
+
+        /* Mode Mobile / Layar Kecil */
+        @media (max-width: 992px) {
+            .sidebar { position: relative; height: auto; width: 100%; }
+            .main-content { margin-left: 0; width: 100%; padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Navigasi Premium -->
+    <div class="sidebar d-flex flex-column p-3">
+        <div class="sidebar-brand text-center fs-4">
+            ✨ TBO Engine
+        </div>
+        <hr style="border-color: #334155;">
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="/" class="nav-link">🏠 Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a href="/fsa" class="nav-link">🤖 Modul 1: FSA</a>
+            </li>
+            <li class="nav-item">
+                <a href="/regex" class="nav-link">📝 Modul 2: RE</a>
+            </li>
+            <li class="nav-item">
+                <a href="/pda" class="nav-link">🥞 Modul 3: PDA & CFG</a>
+            </li>
+            <li class="nav-item">
+                <a href="/cnf" class="nav-link">🗂️ Modul 4: Chomsky/CNF</a>
+            </li>
+        </ul>
+        <div class="p-2 text-center text-muted" style="font-size: 0.75rem; border-top: 1px solid #334155;">
+            v2.0 Beta • OBE Compliant
+        </div>
+    </div>
+    
+    <!-- Konten Utama Aman dari Tabrakan -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Otomatis deteksi halaman aktif
+        document.addEventListener("DOMContentLoaded", function() {
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if(link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
