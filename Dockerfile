@@ -7,5 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# UBAH BARIS DI BAWAH INI:
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "app.routes:app", "--chdir", "/app"]
+# Mengarahkan gunicorn langsung ke file run.py yang baru kita buat
+CMD ["gunicorn", "-b", "0.0.0.0:7860", "run:app"]
